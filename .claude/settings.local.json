@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -sL https://raw.githubusercontent.com/YangModels/yang/main/standard/ietf/RFC/iana-routing-types%402022-08-19.yang)",
+      "Bash(curl -sL \"https://raw.githubusercontent.com/YangModels/yang/main/standard/ietf/RFCunpublished/iana-routing-types%402022-08-19.yang\")",
+      "Bash(curl -sL \"https://api.github.com/repos/YangModels/yang/contents/standard/ietf/RFC?per_page=100\")",
+      "Bash(python3 -c \"import json,sys; files=[f['name'] for f in json.load\\(sys.stdin\\) if 'iana-' in f['name'] or 'ieee' in f['name']]; print\\('\\\\n'.join\\(sorted\\(files\\)\\)\\)\")",
+      "Bash(curl -sL \"https://www.iana.org/assignments/yang-parameters/iana-routing-types.yang\")",
+      "Bash(curl -sL \"https://api.github.com/repos/YangModels/yang/contents/standard/ietf?per_page=100\")",
+      "Bash(python3 -c \"import json,sys; items=json.load\\(sys.stdin\\); [print\\(f['name'], f['type']\\) for f in items]\")",
+      "Bash(curl -sL \"https://api.github.com/repos/YangModels/yang/contents/standard/ietf/DRAFT?per_page=100\")",
+      "Bash(python3 -c \"import json,sys; files=[f['name'] for f in json.load\\(sys.stdin\\) if 'iana-' in f['name'] or 'ssh' in f['name'] or 'tls' in f['name'] or 'icmp' in f['name']]; print\\('\\\\n'.join\\(sorted\\(files\\)\\)\\)\")",
+      "Bash(curl -sL \"https://www.iana.org/assignments/yang-parameters/iana-ssh-encryption-algs.yang\")",
+      "Bash(curl -sL \"https://www.iana.org/assignments/yang-parameters/iana-tls-cipher-suite-algs.yang\")",
+      "Bash(curl -sL \"https://www.iana.org/assignments/yang-parameters/yang-parameters.xhtml\")",
+      "Bash(curl -sL \"https://api.github.com/repos/YangModels/yang/git/trees/main?recursive=1\")",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); [print\\(f['path']\\) for f in data.get\\('tree',[]\\) if 'iana-routing-types' in f.get\\('path',''\\)]\")",
+      "Bash(curl -sL 'https://api.github.com/search/code?q=iana-routing-types+%402022-08-19+extension:yang&per_page=5' -H 'Accept: application/vnd.github.v3+json')",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); [print\\(i['repository']['full_name'], i['path']\\) for i in d.get\\('items',[]\\)]\")",
+      "Bash(curl -sL \"https://raw.githubusercontent.com/YangModels/yang/main/standard/ieee/published/802/ieee802-types.yang\" -o /tmp/ieee802-types.yang)",
+      "Read(//tmp/**)",
+      "Bash(python3 *)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "context7"
+  ]
+}
