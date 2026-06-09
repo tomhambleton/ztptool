@@ -1,0 +1,4 @@
+OpenROADM MSA Public model set, branch 13.1.1
+Source: https://github.com/OpenROADM/OpenROADM_MSA_Public (branch 13.1.1, commit 2628d4a)
+Added: 2026-06-08
+Device model own revision: 2025-01-10
