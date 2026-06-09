@@ -22,9 +22,12 @@ module->namespace mapping to MODULE_NS below and the converter will emit a fresh
 xmlns at that boundary.
 """
 import argparse
+import glob
 import json
+import os
 import re
 import sys
+import tempfile
 
 from lxml import etree
 
@@ -33,12 +36,20 @@ NETCONF_NS = "urn:ietf:params:xml:ns:netconf:base:1.0"
 ROOT_TAG = "org-openroadm-device"
 EOM = "]]>]]>"  # NETCONF 1.0 end-of-message framing
 TOKEN_RE = re.compile(r"__\w+")  # ZTP placeholder, e.g. __NODEID, __RACK_n
+# A "module:identity" value, e.g. org-openroadm-interfaces:ethernetCsmacd
+QNAME_RE = re.compile(r"^([A-Za-z_][\w.-]*):([A-Za-z_][\w.-]*)$")
 
-# Maps RFC 7951 module prefixes (the "module:" part of a "module:node" JSON key)
-# to XML namespaces. The device tree itself is wholly in DEVICE_NS, so the root
-# declaration covers all of input.json; extend this for foreign augmentations.
+# Module-name -> XML namespace. Both JSON keys (RFC 7951 "module:node" at a
+# namespace boundary) and identityref leaf VALUES (RFC 7951 "module:identity")
+# use the module name as the prefix; in XML each needs the module's namespace
+# declared. This built-in set is extended at startup by scanning the YANG models
+# (see load_module_namespaces / --models). The device tree itself is in
+# DEVICE_NS, so plain device-namespace nodes need no per-element declaration.
 MODULE_NS = {
     "org-openroadm-device": DEVICE_NS,
+    "org-openroadm-interfaces": "http://org/openroadm/interfaces",
+    "org-openroadm-routing": "http://org/openroadm/routing",
+    "org-openroadm-ip": "http://org/openroadm/ip",
 }
 
 # Leaves that are "config false" (operational/inventory state) in the
@@ -60,12 +71,44 @@ MANDATORY_CONFIG = {
 }
 
 
+def load_module_namespaces(models_dir):
+    """Scan *.yang under models_dir for `module <name> { namespace "<ns>"; }`
+    and return a {module_name: namespace} map. Used to resolve the namespace of
+    any module prefix that appears on a JSON key or identityref value."""
+    name_re = re.compile(r"^\s*module\s+([\w.-]+)", re.M)
+    ns_re = re.compile(r'^\s*namespace\s+"([^"]+)"', re.M)
+    result = {}
+    for path in glob.glob(os.path.join(models_dir, "**", "*.yang"), recursive=True):
+        try:
+            text = open(path, encoding="utf-8", errors="replace").read()
+        except OSError:
+            continue
+        name = name_re.search(text)
+        ns = ns_re.search(text)
+        if name and ns:
+            result[name.group(1)] = ns.group(1)
+    return result
+
+
 def split_key(key):
     """Return (module_prefix_or_None, local_name) for a JSON member name."""
     if ":" in key:
         prefix, local = key.split(":", 1)
         return prefix, local
     return None, key
+
+
+def value_namespace(value):
+    """If value is an identityref of the form "module:identity" whose module is
+    known, return {module: namespace} so the prefix can be declared on the
+    element; otherwise None. The known-module check avoids misreading colon-
+    bearing strings such as IPv6 addresses as namespaced values."""
+    if isinstance(value, str):
+        match = QNAME_RE.match(value)
+        if match and match.group(1) in MODULE_NS:
+            prefix = match.group(1)
+            return {prefix: MODULE_NS[prefix]}
+    return None
 
 
 def to_text(value):
@@ -75,32 +118,249 @@ def to_text(value):
     return str(value)
 
 
-def build(parent, key, value, cur_ns):
+# --- schema-driven element namespacing ------------------------------------
+#
+# Augmented containers (e.g. interface/ipv4 from org-openroadm-ip, interface/och
+# from org-openroadm-optical-channel-interfaces, the top-level routing tree) live
+# in their augmenting module's namespace, but the templates use bare JSON keys
+# that don't carry that namespace. The same local name can even belong to
+# different namespaces by position (interface/ipv4 is org-openroadm-ip while
+# static-routes/ipv4 is org-openroadm-ipv4-unicast-routing), so the only correct
+# resolution is to walk the YANG schema in parallel with the JSON.
+#
+# SchemaResolver loads a targeted slice of the model (org-openroadm-device plus
+# the modules that augment it) with yangson, dropping any module yangson refuses
+# (e.g. one with an unresolvable leafref) until the data model builds. If yangson
+# or the models are unavailable it degrades to None and the converter falls back
+# to namespace inheritance.
+
+_MODULE_NAME_RE = re.compile(r"org-openroadm-[\w-]+")
+
+
+def _index_models(dirs):
+    """Index *.yang under dirs: {module_name: metadata} plus available revisions.
+    Prefers the unversioned file (latest revision) for each module."""
+    rev_re = re.compile(r'^\s*revision\s+"?(\d{4}-\d{2}-\d{2})"?', re.M)
+    ns_re = re.compile(r'^\s*namespace\s+"([^"]+)"', re.M)
+    type_re = re.compile(r"^\s*(module|submodule)\s+[\w.-]+", re.M)
+    belongs_re = re.compile(r"^\s*belongs-to\s+([\w.-]+)", re.M)
+    feature_re = re.compile(r"^\s*feature\s+([\w.-]+)", re.M)
+    import_re = re.compile(r"\b(?:import|include)\s+([\w.-]+)\s*\{([^}]*)\}", re.S)
+    revdate_re = re.compile(r'revision-date\s+"?(\d{4}-\d{2}-\d{2})"?')
+
+    unversioned, revs = {}, {}
+    for directory in dirs:
+        if not os.path.isdir(directory):
+            continue
+        for fname in os.listdir(directory):
+            if not fname.endswith(".yang"):
+                continue
+            base = fname[:-5]
+            if "@" in base:
+                name, rev = base.split("@", 1)
+                revs.setdefault(name, set()).add(rev)
+            else:
+                unversioned.setdefault(base, os.path.join(directory, fname))
+
+    meta = {}
+    for name, path in unversioned.items():
+        text = open(path, encoding="utf-8", errors="replace").read()
+        type_m = type_re.search(text)
+        ns_m = ns_re.search(text)
+        belongs_m = belongs_re.search(text)
+        found_revs = rev_re.findall(text)
+        deps = [(dep, (revdate_re.search(body).group(1) if revdate_re.search(body) else None))
+                for dep, body in import_re.findall(text)]
+        meta[name] = {
+            "rev": found_revs[0] if found_revs else None,   # first listed = latest
+            "ns": ns_m.group(1) if ns_m else None,
+            "kind": type_m.group(1) if type_m else "module",
+            "belongs": belongs_m.group(1) if belongs_m else None,
+            "features": sorted(set(feature_re.findall(text))),
+            "deps": deps,
+        }
+    return {"meta": meta, "revs": revs}
+
+
+def _device_augmenting_modules(device_dir, common_dir):
+    """Names of modules that augment the org-openroadm-device tree, plus the
+    device module itself. These are the candidates whose namespaces matter."""
+    augment_re = re.compile(r'augment\s+"/org-openroadm-device:')
+    name_re = re.compile(r"^\s*module\s+([\w.-]+)", re.M)
+    names = {"org-openroadm-device"}
+    for directory in (device_dir, common_dir):
+        for path in glob.glob(os.path.join(directory, "*.yang")):
+            if "@" in os.path.basename(path):
+                continue
+            text = open(path, encoding="utf-8", errors="replace").read()
+            if augment_re.search(text):
+                m = name_re.search(text)
+                if m:
+                    names.add(m.group(1))
+    return sorted(names)
+
+
+def _yang_library(seed, excluded, index):
+    """Build an ietf-yang-library for the import closure of seed (minus excluded),
+    keeping only modules whose required revisions are all available as files."""
+    meta, revs = index["meta"], index["revs"]
+
+    def deps(name):
+        return meta.get(name, {}).get("deps", ())
+
+    def rev_ok(dep, want):
+        if dep not in meta:
+            return False
+        return want is None or want == meta[dep]["rev"] or want in revs.get(dep, ())
+
+    seen, stack = set(), [s for s in seed if s not in excluded]
+    while stack:
+        name = stack.pop()
+        if name in seen:
+            continue
+        seen.add(name)
+        stack.extend(dep for dep, _ in deps(name))
+
+    bad = set(excluded) | {n for n in seen if n not in meta}
+    changed = True
+    while changed:
+        changed = False
+        for name in list(seen - bad):
+            if any(dep in bad or not rev_ok(dep, want) for dep, want in deps(name)):
+                bad.add(name)
+                changed = True
+    keep = seen - bad
+
+    chosen = {n: meta[n]["rev"] for n in keep}
+    for name in keep:
+        for dep, want in deps(name):
+            if want and dep in keep:
+                chosen[dep] = want  # honor an explicitly imported revision-date
+
+    modules = []
+    for name in sorted(keep):
+        if meta[name]["kind"] == "submodule":
+            continue
+        entry = {"name": name, "conformance-type": "implement"}
+        if chosen.get(name):
+            entry["revision"] = chosen[name]
+        if meta[name]["ns"]:
+            entry["namespace"] = meta[name]["ns"]
+        if meta[name]["features"]:
+            entry["feature"] = meta[name]["features"]
+        submodules = [
+            {"name": sn, **({"revision": meta[sn]["rev"]} if meta[sn]["rev"] else {})}
+            for sn in sorted(keep)
+            if meta[sn]["kind"] == "submodule" and meta[sn]["belongs"] == name
+        ]
+        if submodules:
+            entry["submodule"] = submodules
+        modules.append(entry)
+    return {"ietf-yang-library:modules-state":
+            {"module-set-id": "ztp-targeted", "module": modules}}
+
+
+class SchemaResolver:
+    def __init__(self, datamodel, name_to_ns):
+        self._dm = datamodel
+        self._name_to_ns = name_to_ns
+        self.root = datamodel.get_data_node("/org-openroadm-device:org-openroadm-device")
+
+    def child(self, schema_node, local_name):
+        """Return the schema node for local_name under schema_node, or None."""
+        if schema_node is None or not hasattr(schema_node, "data_children"):
+            return None
+        for candidate in schema_node.data_children():
+            if candidate.name == local_name:
+                return candidate
+        return None
+
+    def namespace(self, schema_node):
+        """XML namespace URI for a schema node (yangson reports the module name)."""
+        return self._name_to_ns.get(schema_node.ns) if schema_node is not None else None
+
+    @classmethod
+    def load(cls, models_dir, warn=None):
+        """Build a resolver from models_dir, or return None if unavailable."""
+        try:
+            from yangson import DataModel
+        except ImportError:
+            if warn:
+                warn("yangson not installed; skipping schema-driven element namespacing")
+            return None
+        device = os.path.join(models_dir, "Device")
+        common = os.path.join(models_dir, "Common")
+        ietf = os.path.join(os.path.dirname(models_dir.rstrip(os.sep)), "ietf")
+        if not (os.path.isdir(device) and os.path.isdir(common)):
+            if warn:
+                warn("models dir %s has no Device/Common; skipping schema namespacing" % models_dir)
+            return None
+        name_to_ns = load_module_namespaces(models_dir)
+        index = _index_models([device, common, ietf])
+        seed = _device_augmenting_modules(device, common)
+        excluded = set()
+        for _ in range(40):
+            library = _yang_library(seed, excluded, index)
+            fd, tmp = tempfile.mkstemp(suffix=".json", prefix="ztp-yang-library-")
+            try:
+                with os.fdopen(fd, "w") as fh:
+                    json.dump(library, fh)
+                dm = DataModel.from_file(tmp, mod_path=(device, common, ietf))
+                return cls(dm, name_to_ns)
+            except Exception as exc:  # noqa: BLE001 - drop the offending module and retry
+                match = _MODULE_NAME_RE.search(str(exc.args[0]) if exc.args else str(exc))
+                if not match or match.group(0) in excluded:
+                    if warn:
+                        warn("could not build schema for namespacing: %s" % exc)
+                    return None
+                excluded.add(match.group(0))
+            finally:
+                if os.path.exists(tmp):
+                    os.remove(tmp)
+        return None
+
+
+def build(parent, key, value, cur_ns, schema_node=None, resolver=None):
     """Append element(s) for key/value under parent.
 
     A list produces one repeated element per entry (YANG list semantics). A
     default-namespace declaration is emitted only when the namespace changes,
-    so children of org-openroadm-device do not repeat xmlns.
+    so children of org-openroadm-device do not repeat xmlns. When a resolver and
+    schema_node are supplied, the element's namespace is taken from the YANG
+    schema, so augmented nodes (e.g. interface/ipv4) get their module namespace.
     """
     prefix, local = split_key(key)
     ns = MODULE_NS.get(prefix, cur_ns) if prefix else cur_ns
 
+    child_schema = None
+    if resolver is not None and not prefix:
+        child_schema = resolver.child(schema_node, local)
+        schema_ns = resolver.namespace(child_schema) if child_schema is not None else None
+        if schema_ns:
+            ns = schema_ns
+
     if isinstance(value, list):
         for item in value:
-            build(parent, key, item, cur_ns)
+            build(parent, key, item, cur_ns, schema_node, resolver)
         return
 
-    nsmap = {None: ns} if ns != cur_ns else None
-    el = etree.SubElement(parent, "{%s}%s" % (ns, local), nsmap=nsmap)
+    nsmap = {}
+    if ns != cur_ns:
+        nsmap[None] = ns
+    if not isinstance(value, dict):
+        # Declare the namespace of a "module:identity" identityref value so the
+        # prefix in the leaf text is bound rather than left dangling.
+        nsmap.update(value_namespace(value) or {})
+    el = etree.SubElement(parent, "{%s}%s" % (ns, local), nsmap=nsmap or None)
 
     if isinstance(value, dict):
         for child_key, child_val in value.items():
-            build(el, child_key, child_val, ns)
+            build(el, child_key, child_val, ns, child_schema, resolver)
     elif value is not None:
         el.text = to_text(value)
 
 
-def make_message(groups, msg_id, target, default_op):
+def make_message(groups, msg_id, target, default_op, resolver=None):
     """Build one <rpc><edit-config> carrying the given (key, value) groups
     inside a single <org-openroadm-device> root element."""
     rpc = etree.Element("{%s}rpc" % NETCONF_NS, nsmap={None: NETCONF_NS})
@@ -116,8 +376,9 @@ def make_message(groups, msg_id, target, default_op):
     device = etree.SubElement(
         config, "{%s}%s" % (DEVICE_NS, ROOT_TAG), nsmap={None: DEVICE_NS}
     )
+    device_schema = resolver.root if resolver is not None else None
     for key, value in groups:
-        build(device, key, value, DEVICE_NS)
+        build(device, key, value, DEVICE_NS, device_schema, resolver)
     return rpc
 
 
@@ -225,7 +486,27 @@ def main(argv=None):
                         help="first message-id (default: 101)")
     parser.add_argument("--no-eom", action="store_true",
                         help="omit the ']]>]]>' NETCONF 1.0 message separator")
+    parser.add_argument("--models", metavar="DIR",
+                        default=os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                             "models", "openroadm-13.1.1"),
+                        help="YANG models dir used for module->namespace mappings and for "
+                             "schema-driven element namespacing "
+                             "(default: models/openroadm-13.1.1 next to this script)")
+    parser.add_argument("--no-schema-ns", action="store_true",
+                        help="disable schema-driven namespacing of augmented elements "
+                             "(e.g. interface/ipv4, routing); falls back to namespace inheritance")
     args = parser.parse_args(argv)
+
+    # Resolve module->namespace from the models so identityref values like
+    # org-openroadm-interfaces:ethernetCsmacd get the right xmlns in XML.
+    if args.models and os.path.isdir(args.models):
+        MODULE_NS.update(load_module_namespaces(args.models))
+
+    # Build the schema resolver so augmented elements get their module namespace.
+    resolver = None
+    if not args.no_schema_ns and args.models and os.path.isdir(args.models):
+        resolver = SchemaResolver.load(
+            args.models, warn=lambda m: sys.stderr.write("warning: %s\n" % m))
 
     raw = sys.stdin.read() if args.input == "-" else open(args.input, encoding="utf-8").read()
     data = json.loads(raw)
@@ -250,7 +531,7 @@ def main(argv=None):
 
     msg_id = args.start_message_id
     for groups in message_groups(device, args.single):
-        rpc = make_message(groups, msg_id, args.target, args.default_operation)
+        rpc = make_message(groups, msg_id, args.target, args.default_operation, resolver)
         sys.stdout.write(etree.tostring(rpc, pretty_print=True, encoding="unicode"))
         if not args.no_eom:
             sys.stdout.write(EOM + "\n")
