@@ -98,17 +98,31 @@ def split_key(key):
     return None, key
 
 
-def value_namespace(value):
-    """If value is an identityref of the form "module:identity" whose module is
-    known, return {module: namespace} so the prefix can be declared on the
-    element; otherwise None. The known-module check avoids misreading colon-
-    bearing strings such as IPv6 addresses as namespaced values."""
-    if isinstance(value, str):
-        match = QNAME_RE.match(value)
-        if match and match.group(1) in MODULE_NS:
-            prefix = match.group(1)
-            return {prefix: MODULE_NS[prefix]}
-    return None
+def qualify_identityref(value, schema_node, element_ns, resolver):
+    """Return (leaf_text, nsmap_additions) for an identityref leaf value.
+
+    An identityref value is a YANG identity that must be XML-namespace-qualified
+    when it is defined outside the element's own namespace. Two cases:
+
+    * "module:identity" (already prefixed, e.g. org-openroadm-interfaces:gcc):
+      declare that module's namespace and keep the value. Recognised without a
+      schema; the known-module check avoids misreading colon-bearing strings
+      such as IPv6 addresses.
+    * a bare identity (e.g. R100G) on a leaf the schema says is identityref:
+      look up the module that defines the identity and, if it differs from the
+      element's namespace, prefix the value and declare that namespace.
+    """
+    text = to_text(value)
+    match = QNAME_RE.match(text)
+    if match and match.group(1) in MODULE_NS:
+        return text, {match.group(1): MODULE_NS[match.group(1)]}
+    if resolver is not None and ":" not in text and resolver.is_identityref(schema_node):
+        info = resolver.identity_namespace(text)
+        if info:
+            module, namespace = info
+            if namespace != element_ns:
+                return "%s:%s" % (module, text), {module: namespace}
+    return text, {}
 
 
 def to_text(value):
@@ -180,6 +194,30 @@ def _index_models(dirs):
             "deps": deps,
         }
     return {"meta": meta, "revs": revs}
+
+
+def _load_identities(dirs, name_to_ns):
+    """Map identity name -> (module_name, namespace) by scanning `identity X`
+    statements. Lets a bare identityref value be qualified with the namespace of
+    the module that defines it."""
+    name_re = re.compile(r"^\s*module\s+([\w.-]+)", re.M)
+    identity_re = re.compile(r"^\s*identity\s+([\w.-]+)", re.M)
+    result = {}
+    for directory in dirs:
+        for path in glob.glob(os.path.join(directory, "*.yang")):
+            if "@" in os.path.basename(path):
+                continue
+            text = open(path, encoding="utf-8", errors="replace").read()
+            mod = name_re.search(text)
+            if not mod:
+                continue
+            module = mod.group(1)
+            ns = name_to_ns.get(module)
+            if not ns:
+                continue
+            for ident in identity_re.findall(text):
+                result.setdefault(ident, (module, ns))
+    return result
 
 
 def _device_augmenting_modules(device_dir, common_dir):
@@ -261,9 +299,11 @@ def _yang_library(seed, excluded, index):
 
 
 class SchemaResolver:
-    def __init__(self, datamodel, name_to_ns):
+    def __init__(self, datamodel, name_to_ns, identities, identityref_type):
         self._dm = datamodel
         self._name_to_ns = name_to_ns
+        self._identities = identities          # identity name -> (module_name, namespace)
+        self._identityref_type = identityref_type
         self.root = datamodel.get_data_node("/org-openroadm-device:org-openroadm-device")
 
     def child(self, schema_node, local_name):
@@ -279,11 +319,20 @@ class SchemaResolver:
         """XML namespace URI for a schema node (yangson reports the module name)."""
         return self._name_to_ns.get(schema_node.ns) if schema_node is not None else None
 
+    def is_identityref(self, schema_node):
+        """True if schema_node is a leaf/leaf-list whose type is identityref."""
+        return isinstance(getattr(schema_node, "type", None), self._identityref_type)
+
+    def identity_namespace(self, name):
+        """(module_name, namespace) of the module that defines identity name, or None."""
+        return self._identities.get(name)
+
     @classmethod
     def load(cls, models_dir, warn=None):
         """Build a resolver from models_dir, or return None if unavailable."""
         try:
             from yangson import DataModel
+            from yangson.datatype import IdentityrefType
         except ImportError:
             if warn:
                 warn("yangson not installed; skipping schema-driven element namespacing")
@@ -296,6 +345,7 @@ class SchemaResolver:
                 warn("models dir %s has no Device/Common; skipping schema namespacing" % models_dir)
             return None
         name_to_ns = load_module_namespaces(models_dir)
+        identities = _load_identities([device, common], name_to_ns)
         index = _index_models([device, common, ietf])
         seed = _device_augmenting_modules(device, common)
         excluded = set()
@@ -306,7 +356,7 @@ class SchemaResolver:
                 with os.fdopen(fd, "w") as fh:
                     json.dump(library, fh)
                 dm = DataModel.from_file(tmp, mod_path=(device, common, ietf))
-                return cls(dm, name_to_ns)
+                return cls(dm, name_to_ns, identities, IdentityrefType)
             except Exception as exc:  # noqa: BLE001 - drop the offending module and retry
                 match = _MODULE_NAME_RE.search(str(exc.args[0]) if exc.args else str(exc))
                 if not match or match.group(0) in excluded:
@@ -347,17 +397,19 @@ def build(parent, key, value, cur_ns, schema_node=None, resolver=None):
     nsmap = {}
     if ns != cur_ns:
         nsmap[None] = ns
-    if not isinstance(value, dict):
-        # Declare the namespace of a "module:identity" identityref value so the
-        # prefix in the leaf text is bound rather than left dangling.
-        nsmap.update(value_namespace(value) or {})
+    leaf_text = None
+    if not isinstance(value, dict) and value is not None:
+        # Namespace-qualify an identityref value (prefixed or bare) so its
+        # identity is bound rather than left dangling or wrongly inherited.
+        leaf_text, value_ns = qualify_identityref(value, child_schema, ns, resolver)
+        nsmap.update(value_ns)
     el = etree.SubElement(parent, "{%s}%s" % (ns, local), nsmap=nsmap or None)
 
     if isinstance(value, dict):
         for child_key, child_val in value.items():
             build(el, child_key, child_val, ns, child_schema, resolver)
     elif value is not None:
-        el.text = to_text(value)
+        el.text = leaf_text
 
 
 def make_message(groups, msg_id, target, default_op, resolver=None):
