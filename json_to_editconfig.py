@@ -23,6 +23,7 @@ xmlns at that boundary.
 """
 import argparse
 import json
+import re
 import sys
 
 from lxml import etree
@@ -31,6 +32,7 @@ DEVICE_NS = "http://org/openroadm/device"
 NETCONF_NS = "urn:ietf:params:xml:ns:netconf:base:1.0"
 ROOT_TAG = "org-openroadm-device"
 EOM = "]]>]]>"  # NETCONF 1.0 end-of-message framing
+TOKEN_RE = re.compile(r"__\w+")  # ZTP placeholder, e.g. __NODEID, __RACK_n
 
 # Maps RFC 7951 module prefixes (the "module:" part of a "module:node" JSON key)
 # to XML namespaces. The device tree itself is wholly in DEVICE_NS, so the root
@@ -157,6 +159,38 @@ def to_config_only(value, admin_state, node_name=None):
     return value
 
 
+def substitute(value, values):
+    """Return a copy of value with every ZTP token replaced from the values map.
+
+    Replacement is done within string leaf values (handles both whole-value and
+    embedded tokens). Longer tokens are applied first so a token that is a prefix
+    of another (e.g. __RACK vs __RACK_n) cannot corrupt the longer one.
+    """
+    if isinstance(value, dict):
+        return {key: substitute(val, values) for key, val in value.items()}
+    if isinstance(value, list):
+        return [substitute(item, values) for item in value]
+    if isinstance(value, str):
+        for token in sorted(values, key=len, reverse=True):
+            if token in value:
+                value = value.replace(token, values[token])
+    return value
+
+
+def unsubstituted_tokens(value):
+    """Return the set of __TOKEN placeholders still present in string values."""
+    found = set()
+    if isinstance(value, dict):
+        for val in value.values():
+            found |= unsubstituted_tokens(val)
+    elif isinstance(value, list):
+        for item in value:
+            found |= unsubstituted_tokens(item)
+    elif isinstance(value, str):
+        found.update(TOKEN_RE.findall(value))
+    return found
+
+
 def unwrap(data):
     """Return the org-openroadm-device dict from a parsed JSON document."""
     if isinstance(data, dict) and len(data) == 1:
@@ -172,6 +206,9 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("input", help="JSON config file (e.g. input.json); use - for stdin")
+    parser.add_argument("--values", metavar="FILE",
+                        help="JSON map of ZTP placeholders to site values (e.g. values.json); "
+                             "tokens like __NODEID are substituted before conversion")
     parser.add_argument("--target", default="candidate", choices=["candidate", "running"],
                         help="edit-config target datastore (default: candidate)")
     parser.add_argument("--default-operation", default="merge",
@@ -191,7 +228,20 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     raw = sys.stdin.read() if args.input == "-" else open(args.input, encoding="utf-8").read()
-    device = unwrap(json.loads(raw))
+    data = json.loads(raw)
+
+    if args.values:
+        with open(args.values, encoding="utf-8") as fh:
+            values = json.load(fh)
+        if not isinstance(values, dict) or not all(isinstance(v, str) for v in values.values()):
+            parser.error("--values file must be a JSON object mapping tokens to string values")
+        data = substitute(data, values)
+        leftover = unsubstituted_tokens(data)
+        if leftover:
+            sys.stderr.write("warning: tokens not found in %s, left unsubstituted: %s\n"
+                             % (args.values, ", ".join(sorted(leftover))))
+
+    device = unwrap(data)
     if not isinstance(device, dict):
         parser.error("input does not contain an org-openroadm-device object")
 
