@@ -35,6 +35,7 @@ import os
 import re
 import sys
 import tempfile
+import time
 
 from lxml import etree
 
@@ -473,6 +474,8 @@ def send_messages(groups_list, args, resolver):
     sent = 0
     try:
         for index, groups in enumerate(groups_list, start=1):
+            if index > 1 and args.delay > 0:
+                time.sleep(args.delay)
             config = build_config(groups, resolver)
             payload = etree.tostring(config, encoding="unicode")
             try:
@@ -634,6 +637,8 @@ def main(argv=None):
                          help="verify the server SSH host key (default: off)")
     netconf.add_argument("--no-commit", action="store_true",
                          help="do not commit after a successful candidate-datastore run")
+    netconf.add_argument("--delay", type=float, default=1.0, metavar="SECONDS",
+                         help="delay between sending messages (default: 1.0; 0 to disable)")
     args = parser.parse_args(argv)
 
     if args.host and not args.username:
