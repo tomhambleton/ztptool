@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 """Convert an OpenROADM device JSON config (like input.json) into a sequence of
-NETCONF <edit-config> messages, printed to stdout.
+NETCONF <edit-config> messages.
+
+By default the messages are printed to stdout. Given ``--host IP`` (with
+``--username``), they are instead sent to that NETCONF server with ncclient,
+one <edit-config> per message; on the first server or transport error the run
+stops and exits non-zero. When the candidate datastore is targeted (the
+default) a commit is issued after all messages succeed (disable with
+``--no-commit``).
 
 The input is the JSON encoding of an ``org-openroadm-device`` subtree (the
 top-level key may be bare ``org-openroadm-device`` or the RFC 7951 form
@@ -412,9 +419,22 @@ def build(parent, key, value, cur_ns, schema_node=None, resolver=None):
         el.text = leaf_text
 
 
+def build_config(groups, resolver=None):
+    """Build a <config> element (NETCONF base namespace) holding the given
+    (key, value) groups inside a single <org-openroadm-device> root element.
+    This is the payload for a NETCONF <edit-config>."""
+    config = etree.Element("{%s}config" % NETCONF_NS, nsmap={None: NETCONF_NS})
+    device = etree.SubElement(
+        config, "{%s}%s" % (DEVICE_NS, ROOT_TAG), nsmap={None: DEVICE_NS}
+    )
+    device_schema = resolver.root if resolver is not None else None
+    for key, value in groups:
+        build(device, key, value, DEVICE_NS, device_schema, resolver)
+    return config
+
+
 def make_message(groups, msg_id, target, default_op, resolver=None):
-    """Build one <rpc><edit-config> carrying the given (key, value) groups
-    inside a single <org-openroadm-device> root element."""
+    """Build one <rpc><edit-config> carrying the given groups (for stdout)."""
     rpc = etree.Element("{%s}rpc" % NETCONF_NS, nsmap={None: NETCONF_NS})
     rpc.set("message-id", str(msg_id))
 
@@ -423,15 +443,65 @@ def make_message(groups, msg_id, target, default_op, resolver=None):
     etree.SubElement(tgt, "{%s}%s" % (NETCONF_NS, target))
     if default_op:
         etree.SubElement(edit, "{%s}default-operation" % NETCONF_NS).text = default_op
-
-    config = etree.SubElement(edit, "{%s}config" % NETCONF_NS)
-    device = etree.SubElement(
-        config, "{%s}%s" % (DEVICE_NS, ROOT_TAG), nsmap={None: DEVICE_NS}
-    )
-    device_schema = resolver.root if resolver is not None else None
-    for key, value in groups:
-        build(device, key, value, DEVICE_NS, device_schema, resolver)
+    edit.append(build_config(groups, resolver))
     return rpc
+
+
+def send_messages(groups_list, args, resolver):
+    """Send each group as a NETCONF <edit-config> via ncclient, stopping on the
+    first error. Commits afterwards when targeting the candidate datastore."""
+    try:
+        from ncclient import manager
+        from ncclient.operations import RPCError
+    except ImportError:
+        sys.exit("error: ncclient is required to send to a NETCONF server "
+                 "(pip install ncclient)")
+
+    try:
+        session = manager.connect(
+            host=args.host, port=args.port,
+            username=args.username, password=args.password,
+            key_filename=args.ssh_key,
+            hostkey_verify=args.hostkey_verify,
+            allow_agent=True, look_for_keys=args.ssh_key is None,
+            timeout=args.timeout,
+            device_params={"name": "default"},
+        )
+    except Exception as exc:  # noqa: BLE001 - connection/auth failure
+        sys.exit("error: cannot connect to %s:%d: %s" % (args.host, args.port, exc))
+
+    sent = 0
+    try:
+        for index, groups in enumerate(groups_list, start=1):
+            config = build_config(groups, resolver)
+            payload = etree.tostring(config, encoding="unicode")
+            try:
+                session.edit_config(target=args.target, config=payload,
+                                    default_operation=args.default_operation)
+            except RPCError as exc:
+                sys.stderr.write("error: edit-config %d/%d rejected by server: %s\n"
+                                 % (index, len(groups_list), exc))
+                sys.exit(1)
+            except Exception as exc:  # noqa: BLE001 - transport/other failure
+                sys.stderr.write("error: edit-config %d/%d failed: %s\n"
+                                 % (index, len(groups_list), exc))
+                sys.exit(1)
+            sent += 1
+            sys.stderr.write("ok: edit-config %d/%d applied to %s\n"
+                             % (index, len(groups_list), args.target))
+
+        if args.target == "candidate" and not args.no_commit:
+            try:
+                session.commit()
+                sys.stderr.write("ok: committed candidate datastore\n")
+            except Exception as exc:  # noqa: BLE001 - commit failure
+                sys.exit("error: commit failed: %s" % exc)
+    finally:
+        try:
+            session.close_session()
+        except Exception:  # noqa: BLE001 - best-effort cleanup
+            pass
+    sys.stderr.write("done: %d edit-config message(s) applied\n" % sent)
 
 
 def message_groups(device, single):
@@ -547,7 +617,27 @@ def main(argv=None):
     parser.add_argument("--no-schema-ns", action="store_true",
                         help="disable schema-driven namespacing of augmented elements "
                              "(e.g. interface/ipv4, routing); falls back to namespace inheritance")
+
+    netconf = parser.add_argument_group(
+        "NETCONF server (when --host is given, edit-configs are sent via ncclient "
+        "instead of printed to stdout)")
+    netconf.add_argument("--host", metavar="IP",
+                         help="NETCONF server address; enables sending via ncclient")
+    netconf.add_argument("--port", type=int, default=830,
+                         help="NETCONF server port (default: 830)")
+    netconf.add_argument("--username", help="NETCONF username")
+    netconf.add_argument("--password", help="NETCONF password (else SSH key/agent is used)")
+    netconf.add_argument("--ssh-key", metavar="FILE", help="SSH private key file for authentication")
+    netconf.add_argument("--timeout", type=int, default=30,
+                         help="NETCONF operation timeout in seconds (default: 30)")
+    netconf.add_argument("--hostkey-verify", action="store_true",
+                         help="verify the server SSH host key (default: off)")
+    netconf.add_argument("--no-commit", action="store_true",
+                         help="do not commit after a successful candidate-datastore run")
     args = parser.parse_args(argv)
+
+    if args.host and not args.username:
+        parser.error("--username is required when --host is given")
 
     # Resolve module->namespace from the models so identityref values like
     # org-openroadm-interfaces:ethernetCsmacd get the right xmlns in XML.
@@ -581,8 +671,14 @@ def main(argv=None):
     if args.config_only:
         device = to_config_only(device, args.admin_state)
 
+    groups_list = list(message_groups(device, args.single))
+
+    if args.host:
+        send_messages(groups_list, args, resolver)
+        return
+
     msg_id = args.start_message_id
-    for groups in message_groups(device, args.single):
+    for groups in groups_list:
         rpc = make_message(groups, msg_id, args.target, args.default_operation, resolver)
         sys.stdout.write(etree.tostring(rpc, pretty_print=True, encoding="unicode"))
         if not args.no_eom:
