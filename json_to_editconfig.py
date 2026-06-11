@@ -109,13 +109,16 @@ def split_key(key):
 def qualify_identityref(value, schema_node, element_ns, resolver):
     """Return (leaf_text, nsmap_additions) for an identityref leaf value.
 
-    An identityref value is a YANG identity that must be XML-namespace-qualified
-    when it is defined outside the element's own namespace. Two cases:
+    An identityref value is a YANG identity that needs an XML-namespace prefix
+    only when it is defined outside the element's own namespace; when the
+    identity's module is the element's current namespace the prefix is dropped.
+    Two cases:
 
     * "module:identity" (already prefixed, e.g. org-openroadm-interfaces:gcc):
-      declare that module's namespace and keep the value. Recognised without a
-      schema; the known-module check avoids misreading colon-bearing strings
-      such as IPv6 addresses.
+      if the module's namespace matches the element's, emit the bare identity;
+      otherwise keep the value and declare that module's namespace. Recognised
+      without a schema; the known-module check avoids misreading colon-bearing
+      strings such as IPv6 addresses.
     * a bare identity (e.g. R100G) on a leaf the schema says is identityref:
       look up the module that defines the identity and, if it differs from the
       element's namespace, prefix the value and declare that namespace.
@@ -123,7 +126,11 @@ def qualify_identityref(value, schema_node, element_ns, resolver):
     text = to_text(value)
     match = QNAME_RE.match(text)
     if match and match.group(1) in MODULE_NS:
-        return text, {match.group(1): MODULE_NS[match.group(1)]}
+        module, identity = match.group(1), match.group(2)
+        namespace = MODULE_NS[module]
+        if namespace == element_ns:
+            return identity, {}            # prefix not needed in this namespace
+        return text, {module: namespace}
     if resolver is not None and ":" not in text and resolver.is_identityref(schema_node):
         info = resolver.identity_namespace(text)
         if info:
