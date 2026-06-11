@@ -1,0 +1,18 @@
+{
+    "org-openroadm-device": {
+        "circuit-packs": [
+            {
+                "circuit-pack-type": "2UX200",
+                "circuit-pack-product-code": "3TD00493AA",
+                "faceplate-label": "2UX200",
+                "model": "2UX200",
+                "circuit-pack-name": "__SHELF/__SLOT",
+                "vendor": "Nokia",
+                "shelf": "__SHELF",
+                "slot": "__SLOT",
+                "due-date": "__DUEDATE",
+                "is-physical": "true"
+            }
+        ]
+    }
+}

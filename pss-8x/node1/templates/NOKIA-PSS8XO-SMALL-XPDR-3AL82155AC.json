@@ -1,0 +1,33 @@
+{
+    "org-openroadm-device": {
+        "circuit-packs": [
+            {
+                "circuit-pack-type": "C4ACOO",
+                "circuit-pack-product-code": "3AL82155AC",
+                "ports": [
+                    {
+                        "port-qual": "switch-network",
+                        "port-name": "1",
+                        "port-direction": "bidirectional",
+                        "faceplate-label": "pluggable",
+                        "is-physical": "true",
+                        "logical-connection-point": "__LOGICALCONNPT"
+                    }
+                ],
+                "model": "C4ACOO",
+                "circuit-pack-name": "__SHELF/__SLOT/__SUBSLOT",
+                "vendor": "Nokia",
+                "faceplate-label": "pluggable",
+                "is-physical": "true",
+                "shelf": "__SHELF",
+                "slot": "__SLOT",
+                "subSlot": "__SUBSLOT",
+                "due-date": "__DUEDATE",
+                "parent-circuit-pack": {
+                    "circuit-pack-name": "__SHELF/__SLOT",
+                    "cp-slot-name": "__SUBSLOT"
+                }
+            }
+        ]
+    }
+}

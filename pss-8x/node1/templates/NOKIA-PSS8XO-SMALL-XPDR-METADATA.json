@@ -1,0 +1,947 @@
+{
+    "vendor": "Nokia",
+    "version-number": "260526.1",
+    "update-date": "2026-05-28",
+    "minimum-ne-software-version": "0",
+    "msa-version": "13.1.1",
+    "mandatory-upgrade": false,
+    "transponder-node-data": {
+        "template-name": "NOKIA-PSS8XO-SMALL-XPDR",
+        "node-type": "xpdr",
+        "short-description": "Nokia PSS-8x Transponder (OpenROADM configuration)",
+        "description": "Nokia PSS-8x Transponder (OpenROADM configuration)",
+        "equipment-template-file-name": "NOKIA-PSS8XO-SMALL-XPDR-BASE",
+        "ipv6-configuration-file-name-with-default-route": "NOKIA-PSS8XO-SMALL-XPDR-BASE-IPV6-DR",
+        "ipv6-configuration-file-name-without-default-route": "NOKIA-PSS8XO-SMALL-XPDR-BASE-IPV6-NODR",
+        "ipv4-configuration-file-name-with-default-route": "NOKIA-PSS8XO-SMALL-XPDR-BASE-IPV4-DR",
+        "bom-data-file-name": "NOKIA-PSS8XO-SMALL-XPDR-BASE-BOM",
+        "maximum-number-of-shelves": 1,
+        "number-of-racks-in-base-configuration": 1,
+        "number-of-shelves-in-base-configuration": 1,
+        "shelf-position-values": "variable",
+        "rack-data": {
+            "rack-number": [
+                "1"
+            ]
+        },
+        "management-communication-port-data": {
+            "supporting-circuit-pack-name": "1/2",
+            "supporting-port-name": "OAMP"
+        },
+        "shelf-augment-data": [
+        ],
+        "shelf-type-data": [
+            {
+                "number-of-slots-in-shelf": 21,
+                "shelf-type": "PSS-8x",
+                "circuit-packs-supported": [
+                    {
+                        "circuit-pack-identifier": "3TD09046AA",
+                        "slots-supported": [
+                            "1",
+                            "16"
+                        ],
+                        "number-of-slots": 1
+                    },
+                    {
+                        "circuit-pack-identifier": "3TD09044AA",
+                        "slots-supported": [
+                            "2",
+                            "15"
+                        ],
+                        "number-of-slots": 1
+                    },
+                    {
+                        "circuit-pack-identifier": "3TD00055AA",
+                        "slots-supported": [
+                            "7",
+                            "8",
+                            "9"
+                        ],
+                        "number-of-slots": 1
+                    },
+                    {
+                        "circuit-pack-identifier": "3TD09045AA",
+                        "slots-supported": [
+                            "14"
+                        ],
+                        "number-of-slots": 1
+                    },
+                    {
+                        "circuit-pack-identifier": "3TD00070AA",
+                        "slots-supported": [
+                            "19",
+                            "20",
+                            "21"
+                        ],
+                        "number-of-slots": 1
+                    },
+                    {
+                        "circuit-pack-identifier": "3TD00493AA",
+                        "slots-supported": [
+                            "3",
+                            "4",
+                            "5",
+                            "6",
+                            "10",
+                            "11",
+                            "12",
+                            "13"
+                        ],
+                        "number-of-slots": 1
+                    },
+                    {
+                        "circuit-pack-identifier": "3TD00026AA",
+                        "slots-supported": [
+                            "3",
+                            "4",
+                            "5",
+                            "6",
+                            "10",
+                            "11",
+                            "12",
+                            "13"
+                        ],
+                        "number-of-slots": 1
+                    },
+                    {
+                        "circuit-pack-identifier": "3TD00019AA",
+                        "slots-supported": [
+                            "3",
+                            "4",
+                            "5",
+                            "6",
+                            "10",
+                            "11",
+                            "12",
+                            "13"
+                        ],
+                        "number-of-slots": 1
+                    }
+                ]
+            }
+        ]
+    },
+    "circuit-pack-unique-identifier": "Product Code",
+    "circuit-pack-data-transponder-muxponder-pluggable-optic": [
+        {
+            "circuit-pack-model": "2UX200",
+            "circuit-pack-type": "2UX200",
+            "circuit-pack-product-code": "3TD00493AA",
+            "parent-circuit-pack-identifier": "",
+            "circuit-pack-name-format": "__SHELF/__SLOT",
+            "equipment-template-file-name": "NOKIA-PSS8XO-SMALL-XPDR-3TD00493AA",
+            "bom-data-file-name": "NOKIA-PSS8XO-SMALL-XPDR-3TD00493AA-BOM",
+            "connection-map-file-name": "NOKIA-PSS8XO-SMALL-XPDR-3TD00493AA-CONNECTION-MAP",
+            "update-node-physical-links": false,
+            "number-of-cp-slots": 2,
+            "cp-slot-limitation": [
+            ],
+            "cp-slots": [
+                {
+                    "slot-name": "1",
+                    "supported-circuit-pack-identifiers": [
+                        "3AL82155AC"
+                    ]
+                },
+                {
+                    "slot-name": "2",
+                    "supported-circuit-pack-identifiers": [
+                        "3AL82155AC"
+                    ]
+                }
+            ],
+            "number-of-ports": 0,
+            "port-data": [
+            ],
+            "network-operational-mode": [
+            ],
+            "xpdr-type": [
+                "switch-node"
+            ],
+            "equipment-srg-naming-format": "__SLOT"
+        },
+        {
+            "circuit-pack-model": "20AX200",
+            "circuit-pack-type": "20AX200",
+            "circuit-pack-product-code": "3TD00026AA",
+            "parent-circuit-pack-identifier": "",
+            "circuit-pack-name-format": "__SHELF/__SLOT",
+            "equipment-template-file-name": "NOKIA-PSS8XO-SMALL-XPDR-3TD00026AA",
+            "bom-data-file-name": "NOKIA-PSS8XO-SMALL-XPDR-3TD00026AA-BOM",
+            "connection-map-file-name": "NOKIA-PSS8XO-SMALL-XPDR-3TD00026AA-CONNECTION-MAP",
+            "update-node-physical-links": false,
+            "number-of-cp-slots": 20,
+            "cp-slot-limitation": [
+            ],
+            "cp-slots": [
+                {
+                    "slot-name": "1",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                },
+                {
+                    "slot-name": "2",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                },
+                {
+                    "slot-name": "3",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                },
+                {
+                    "slot-name": "4",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                },
+                {
+                    "slot-name": "5",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                },
+                {
+                    "slot-name": "6",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                },
+                {
+                    "slot-name": "7",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                },
+                {
+                    "slot-name": "8",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                },
+                {
+                    "slot-name": "9",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                },
+                {
+                    "slot-name": "10",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                },
+                {
+                    "slot-name": "11",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                },
+                {
+                    "slot-name": "12",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                },
+                {
+                    "slot-name": "13",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                },
+                {
+                    "slot-name": "14",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                },
+                {
+                    "slot-name": "15",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                },
+                {
+                    "slot-name": "16",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                },
+                {
+                    "slot-name": "17",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                },
+                {
+                    "slot-name": "18",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                },
+                {
+                    "slot-name": "19",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                },
+                {
+                    "slot-name": "20",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                }
+            ],
+            "number-of-ports": 0,
+            "port-data": [
+            ],
+            "network-operational-mode": [
+            ],
+            "xpdr-type": [
+                "switch-node"
+            ],
+            "equipment-srg-naming-format": "__SLOT"
+        },
+        {
+            "circuit-pack-model": "20MX80",
+            "circuit-pack-type": "20MX80",
+            "circuit-pack-product-code": "3TD00019AA",
+            "parent-circuit-pack-identifier": "",
+            "circuit-pack-name-format": "__SHELF/__SLOT",
+            "equipment-template-file-name": "NOKIA-PSS8XO-SMALL-XPDR-3TD00019AA",
+            "bom-data-file-name": "NOKIA-PSS8XO-SMALL-XPDR-3TD00019AA-BOM",
+            "connection-map-file-name": "NOKIA-PSS8XO-SMALL-XPDR-3TD00019AA-CONNECTION-MAP",
+            "update-node-physical-links": false,
+            "number-of-cp-slots": 20,
+            "cp-slot-limitation": [
+            ],
+            "cp-slots": [
+                {
+                    "slot-name": "1",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB376720002",
+                        "1AB376720003"
+                    ]
+                },
+                {
+                    "slot-name": "2",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB376720002",
+                        "1AB376720003"
+                    ]
+                },
+                {
+                    "slot-name": "3",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB376720002",
+                        "1AB376720003"
+                    ]
+                },
+                {
+                    "slot-name": "4",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB376720002",
+                        "1AB376720003"
+                    ]
+                },
+                {
+                    "slot-name": "5",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB376720002",
+                        "1AB376720003"
+                    ]
+                },
+                {
+                    "slot-name": "6",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB376720002",
+                        "1AB376720003"
+                    ]
+                },
+                {
+                    "slot-name": "7",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB376720002",
+                        "1AB376720003"
+                    ]
+                },
+                {
+                    "slot-name": "8",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB376720002",
+                        "1AB376720003"
+                    ]
+                },
+                {
+                    "slot-name": "9",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB376720002",
+                        "1AB376720003"
+                    ]
+                },
+                {
+                    "slot-name": "10",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB376720002",
+                        "1AB376720003"
+                    ]
+                },
+                {
+                    "slot-name": "11",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB376720002",
+                        "1AB376720003"
+                    ]
+                },
+                {
+                    "slot-name": "12",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB376720002",
+                        "1AB376720003"
+                    ]
+                },
+                {
+                    "slot-name": "13",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB376720002",
+                        "1AB376720003"
+                    ]
+                },
+                {
+                    "slot-name": "14",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB376720002",
+                        "1AB376720003"
+                    ]
+                },
+                {
+                    "slot-name": "15",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB376720002",
+                        "1AB376720003"
+                    ]
+                },
+                {
+                    "slot-name": "16",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB376720002",
+                        "1AB376720003"
+                    ]
+                },
+                {
+                    "slot-name": "17",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                },
+                {
+                    "slot-name": "18",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                },
+                {
+                    "slot-name": "19",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                },
+                {
+                    "slot-name": "20",
+                    "supported-circuit-pack-identifiers": [
+                        "1AB390930013",
+                        "1AB390930014",
+                        "3AL82019AA"
+                    ]
+                }
+            ],
+            "number-of-ports": 0,
+            "port-data": [
+            ],
+            "network-operational-mode": [
+            ],
+            "xpdr-type": [
+                "switch-node"
+            ],
+            "equipment-srg-naming-format": "__SLOT"
+        },
+        {
+            "circuit-pack-model": "C4ACOO",
+            "circuit-pack-type": "C4ACOO",
+            "circuit-pack-product-code": "3AL82155AC",
+            "parent-circuit-pack-identifier": "3TD00493AA",
+            "circuit-pack-name-format": "__SHELF/__SLOT/__SUBSLOT",
+            "equipment-template-file-name": "NOKIA-PSS8XO-SMALL-XPDR-3AL82155AC",
+            "bom-data-file-name": "NOKIA-PSS8XO-SMALL-XPDR-3AL82155AC-BOM",
+            "connection-map-file-name": "",
+            "update-node-physical-links": false,
+            "number-of-cp-slots": 0,
+            "cp-slot-limitation": [
+            ],
+            "cp-slots": [
+            ],
+            "number-of-ports": 1,
+            "port-data": [
+                {
+                    "port-name": "1",
+                    "port-qual": [
+                        "switch-network"
+                    ],
+                    "supported-service-rates": [
+                        {
+                            "rate": "100",
+                            "supported-service-formats": [
+                                "OTU"
+                            ],
+                            "supported-client-phy-codes": [
+                            ]
+                        }
+                    ],
+                    "optic-type": "dwdm"
+                }
+            ],
+            "network-operational-mode": [
+                "OR-W-100G-SC"
+            ],
+            "xpdr-type": [
+            ],
+            "equipment-srg-naming-format": ""
+        },
+        {
+            "circuit-pack-model": "1000B-LX",
+            "circuit-pack-type": "1000B-LX",
+            "circuit-pack-product-code": "1AB376720002",
+            "parent-circuit-pack-identifier": "3TD00019AA",
+            "circuit-pack-name-format": "__SHELF/__SLOT/__SUBSLOT",
+            "equipment-template-file-name": "NOKIA-PSS8XO-SMALL-XPDR-1AB376720002",
+            "bom-data-file-name": "NOKIA-PSS8XO-SMALL-XPDR-1AB376720002-BOM",
+            "connection-map-file-name": "",
+            "update-node-physical-links": false,
+            "number-of-cp-slots": 0,
+            "cp-slot-limitation": [
+            ],
+            "cp-slots": [
+            ],
+            "number-of-ports": 1,
+            "port-data": [
+                {
+                    "port-name": "1",
+                    "port-qual": [
+                        "switch-client"
+                    ],
+                    "supported-service-rates": [
+                        {
+                            "rate": "1",
+                            "supported-service-formats": [
+                                "Ethernet"
+                            ],
+                            "supported-client-phy-codes": [
+                                "ethernet-1000BASE-LX"
+                            ]
+                        }
+                    ],
+                    "optic-type": "gray"
+                }
+            ],
+            "network-operational-mode": [
+            ],
+            "xpdr-type": [
+            ],
+            "equipment-srg-naming-format": ""
+        },
+        {
+            "circuit-pack-model": "1000B-ZX",
+            "circuit-pack-type": "1000B-ZX",
+            "circuit-pack-product-code": "1AB376720003",
+            "parent-circuit-pack-identifier": "3TD00019AA",
+            "circuit-pack-name-format": "__SHELF/__SLOT/__SUBSLOT",
+            "equipment-template-file-name": "NOKIA-PSS8XO-SMALL-XPDR-1AB376720003",
+            "bom-data-file-name": "NOKIA-PSS8XO-SMALL-XPDR-1AB376720003-BOM",
+            "connection-map-file-name": "",
+            "update-node-physical-links": false,
+            "number-of-cp-slots": 0,
+            "cp-slot-limitation": [
+            ],
+            "cp-slots": [
+            ],
+            "number-of-ports": 1,
+            "port-data": [
+                {
+                    "port-name": "1",
+                    "port-qual": [
+                        "switch-client"
+                    ],
+                    "supported-service-rates": [
+                        {
+                            "rate": "1",
+                            "supported-service-formats": [
+                                "Ethernet"
+                            ],
+                            "supported-client-phy-codes": [
+                                "ethernet-1000BASE-ZX"
+                            ]
+                        }
+                    ],
+                    "optic-type": "gray"
+                }
+            ],
+            "network-operational-mode": [
+            ],
+            "xpdr-type": [
+            ],
+            "equipment-srg-naming-format": ""
+        },
+        {
+            "circuit-pack-model": "SXI64.1",
+            "circuit-pack-type": "SXI64.1",
+            "circuit-pack-product-code": "1AB390930013",
+            "parent-circuit-pack-identifier": "3TD00026AA",
+            "circuit-pack-name-format": "__SHELF/__SLOT/__SUBSLOT",
+            "equipment-template-file-name": "NOKIA-PSS8XO-SMALL-XPDR-1AB390930013",
+            "bom-data-file-name": "NOKIA-PSS8XO-SMALL-XPDR-1AB390930013-BOM",
+            "connection-map-file-name": "",
+            "update-node-physical-links": false,
+            "number-of-cp-slots": 0,
+            "cp-slot-limitation": [
+            ],
+            "cp-slots": [
+            ],
+            "number-of-ports": 1,
+            "port-data": [
+                {
+                    "port-name": "1",
+                    "port-qual": [
+                        "switch-client"
+                    ],
+                    "supported-service-rates": [
+                        {
+                            "rate": "10",
+                            "supported-service-formats": [
+                                "Ethernet",
+                                "OTU"
+                            ],
+                            "supported-client-phy-codes": [
+                                "ethernet-10GBASE-LR",
+                                "ethernet-10GBASE-LW",
+                                "otn-P1I1-2D1"
+                            ]
+                        }
+                    ],
+                    "optic-type": "gray"
+                }
+            ],
+            "network-operational-mode": [
+            ],
+            "xpdr-type": [
+            ],
+            "equipment-srg-naming-format": ""
+        },
+        {
+            "circuit-pack-model": "SXI64.1",
+            "circuit-pack-type": "SXI64.1",
+            "circuit-pack-product-code": "1AB390930013",
+            "parent-circuit-pack-identifier": "3TD00019AA",
+            "circuit-pack-name-format": "__SHELF/__SLOT/__SUBSLOT",
+            "equipment-template-file-name": "NOKIA-PSS8XO-SMALL-XPDR-1AB390930013",
+            "bom-data-file-name": "NOKIA-PSS8XO-SMALL-XPDR-1AB390930013-BOM",
+            "connection-map-file-name": "",
+            "update-node-physical-links": false,
+            "number-of-cp-slots": 0,
+            "cp-slot-limitation": [
+            ],
+            "cp-slots": [
+            ],
+            "number-of-ports": 1,
+            "port-data": [
+                {
+                    "port-name": "1",
+                    "port-qual": [
+                        "switch-client"
+                    ],
+                    "supported-service-rates": [
+                        {
+                            "rate": "10",
+                            "supported-service-formats": [
+                                "Ethernet",
+                                "OTU"
+                            ],
+                            "supported-client-phy-codes": [
+                                "ethernet-10GBASE-LR",
+                                "ethernet-10GBASE-LW",
+                                "otn-P1I1-2D1"
+                            ]
+                        }
+                    ],
+                    "optic-type": "gray"
+                }
+            ],
+            "network-operational-mode": [
+            ],
+            "xpdr-type": [
+            ],
+            "equipment-srg-naming-format": ""
+        },
+        {
+            "circuit-pack-model": "SXL64.2",
+            "circuit-pack-type": "SXL64.2",
+            "circuit-pack-product-code": "3AL82019AA",
+            "parent-circuit-pack-identifier": "3TD00026AA",
+            "circuit-pack-name-format": "__SHELF/__SLOT/__SUBSLOT",
+            "equipment-template-file-name": "NOKIA-PSS8XO-SMALL-XPDR-3AL82019AA",
+            "bom-data-file-name": "NOKIA-PSS8XO-SMALL-XPDR-3AL82019AA-BOM",
+            "connection-map-file-name": "",
+            "update-node-physical-links": false,
+            "number-of-cp-slots": 0,
+            "cp-slot-limitation": [
+            ],
+            "cp-slots": [
+            ],
+            "number-of-ports": 1,
+            "port-data": [
+                {
+                    "port-name": "1",
+                    "port-qual": [
+                        "switch-client"
+                    ],
+                    "supported-service-rates": [
+                        {
+                            "rate": "10",
+                            "supported-service-formats": [
+                                "Ethernet",
+                                "OTU"
+                            ],
+                            "supported-client-phy-codes": [
+                                "ethernet-10GBASE-ZR",
+                                "ethernet-10GBASE-ZW",
+                                "otn-1L1-2D2F",
+                                "otn-P1L1-2D2"
+                            ]
+                        }
+                    ],
+                    "optic-type": "gray"
+                }
+            ],
+            "network-operational-mode": [
+            ],
+            "xpdr-type": [
+            ],
+            "equipment-srg-naming-format": ""
+        },
+        {
+            "circuit-pack-model": "SXL64.2",
+            "circuit-pack-type": "SXL64.2",
+            "circuit-pack-product-code": "3AL82019AA",
+            "parent-circuit-pack-identifier": "3TD00019AA",
+            "circuit-pack-name-format": "__SHELF/__SLOT/__SUBSLOT",
+            "equipment-template-file-name": "NOKIA-PSS8XO-SMALL-XPDR-3AL82019AA",
+            "bom-data-file-name": "NOKIA-PSS8XO-SMALL-XPDR-3AL82019AA-BOM",
+            "connection-map-file-name": "",
+            "update-node-physical-links": false,
+            "number-of-cp-slots": 0,
+            "cp-slot-limitation": [
+            ],
+            "cp-slots": [
+            ],
+            "number-of-ports": 1,
+            "port-data": [
+                {
+                    "port-name": "1",
+                    "port-qual": [
+                        "switch-client"
+                    ],
+                    "supported-service-rates": [
+                        {
+                            "rate": "10",
+                            "supported-service-formats": [
+                                "Ethernet",
+                                "OTU"
+                            ],
+                            "supported-client-phy-codes": [
+                                "ethernet-10GBASE-ZR",
+                                "ethernet-10GBASE-ZW",
+                                "otn-1L1-2D2F",
+                                "otn-P1L1-2D2"
+                            ]
+                        }
+                    ],
+                    "optic-type": "gray"
+                }
+            ],
+            "network-operational-mode": [
+            ],
+            "xpdr-type": [
+            ],
+            "equipment-srg-naming-format": ""
+        },
+        {
+            "circuit-pack-model": "SXS64.2B",
+            "circuit-pack-type": "SXS64.2B",
+            "circuit-pack-product-code": "1AB390930014",
+            "parent-circuit-pack-identifier": "3TD00026AA",
+            "circuit-pack-name-format": "__SHELF/__SLOT/__SUBSLOT",
+            "equipment-template-file-name": "NOKIA-PSS8XO-SMALL-XPDR-1AB390930014",
+            "bom-data-file-name": "NOKIA-PSS8XO-SMALL-XPDR-1AB390930014-BOM",
+            "connection-map-file-name": "",
+            "update-node-physical-links": false,
+            "number-of-cp-slots": 0,
+            "cp-slot-limitation": [
+            ],
+            "cp-slots": [
+            ],
+            "number-of-ports": 1,
+            "port-data": [
+                {
+                    "port-name": "1",
+                    "port-qual": [
+                        "switch-client"
+                    ],
+                    "supported-service-rates": [
+                        {
+                            "rate": "10",
+                            "supported-service-formats": [
+                                "Ethernet",
+                                "OTU"
+                            ],
+                            "supported-client-phy-codes": [
+                                "ethernet-10GBASE-ER",
+                                "ethernet-10GBASE-EW",
+                                "otn-1S1-2D2bF",
+                                "otn-P1S1-2D2b"
+                            ]
+                        }
+                    ],
+                    "optic-type": "gray"
+                }
+            ],
+            "network-operational-mode": [
+            ],
+            "xpdr-type": [
+            ],
+            "equipment-srg-naming-format": ""
+        },
+        {
+            "circuit-pack-model": "SXS64.2B",
+            "circuit-pack-type": "SXS64.2B",
+            "circuit-pack-product-code": "1AB390930014",
+            "parent-circuit-pack-identifier": "3TD00019AA",
+            "circuit-pack-name-format": "__SHELF/__SLOT/__SUBSLOT",
+            "equipment-template-file-name": "NOKIA-PSS8XO-SMALL-XPDR-1AB390930014",
+            "bom-data-file-name": "NOKIA-PSS8XO-SMALL-XPDR-1AB390930014-BOM",
+            "connection-map-file-name": "",
+            "update-node-physical-links": false,
+            "number-of-cp-slots": 0,
+            "cp-slot-limitation": [
+            ],
+            "cp-slots": [
+            ],
+            "number-of-ports": 1,
+            "port-data": [
+                {
+                    "port-name": "1",
+                    "port-qual": [
+                        "switch-client"
+                    ],
+                    "supported-service-rates": [
+                        {
+                            "rate": "10",
+                            "supported-service-formats": [
+                                "Ethernet",
+                                "OTU"
+                            ],
+                            "supported-client-phy-codes": [
+                                "ethernet-10GBASE-ER",
+                                "ethernet-10GBASE-EW",
+                                "otn-1S1-2D2bF",
+                                "otn-P1S1-2D2b"
+                            ]
+                        }
+                    ],
+                    "optic-type": "gray"
+                }
+            ],
+            "network-operational-mode": [
+            ],
+            "xpdr-type": [
+            ],
+            "equipment-srg-naming-format": ""
+        }
+    ],
+    "remote-transponder-configuration-files": {
+        "ipv4-loopback-address-configuration-file-name": "NOKIA-PSS8XO-SMALL-XPDR-RTBASE-IPV4",
+        "ipv6-loopback-address-configuration-file-name": "NOKIA-PSS8XO-SMALL-XPDR-RTBASE-IPV6",
+        "gcc-loopback-configuration-files": [
+            {
+                "rate": "R100G",
+                "ipv4-gcc-configuration-file-name": "NOKIA-PSS8XO-SMALL-XPDR-RTSVC-OCH-GCC-IPV4",
+                "ipv6-gcc-configuration-file-name": "NOKIA-PSS8XO-SMALL-XPDR-RTSVC-OCH-GCC-IPV6"
+            }
+        ]
+    },
+    "bom-list-for-initial-remote-transponder-build": [
+        {
+            "xpdr-type": [
+                "switch-node"
+            ],
+            "network-operational-mode": [
+                "OCH"
+            ],
+            "channel-type": [
+                "gcc0"
+            ],
+            "supporting-circuit-pack-name": "__SUPPORTINGCP",
+            "supporting-circuit-pack-port": "__SUPPORTINGPORT",
+            "bom-list": [
+            ]
+        }
+    ]
+}

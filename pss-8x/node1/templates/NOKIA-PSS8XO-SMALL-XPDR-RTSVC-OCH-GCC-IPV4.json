@@ -1,0 +1,98 @@
+{
+    "org-openroadm-device": {
+        "interface": [
+            {
+                "name": "och-__SUPPORTINGCP/__SUPPORTINGPORT",
+                "type": "org-openroadm-interfaces:opticalChannel",
+                "circuit-id": "__CIRCUITID",
+                "supporting-circuit-pack-name": "__SUPPORTINGCP",
+                "supporting-port": "__SUPPORTINGPORT",
+                "och": {
+                    "rate": "R100G",
+                    "frequency": "193.1",
+                    "transmit-power": "0"
+                }
+            },
+            {
+                "name": "otu-__SUPPORTINGCP/__SUPPORTINGPORT",
+                "type": "org-openroadm-interfaces:otnOtu",
+                "circuit-id": "__CIRCUITID",
+                "supporting-circuit-pack-name": "__SUPPORTINGCP",
+                "supporting-port": "__SUPPORTINGPORT",
+                "supporting-interface-list": [
+                    {
+                        "supporting-interface-list": "och-__SUPPORTINGCP/__SUPPORTINGPORT"
+                    }
+                ],
+                "otu": {
+                    "rate": "OTU4"
+                }
+            },
+            {
+                "name": "gcc0-__SUPPORTINGCP/__SUPPORTINGPORT",
+                "type": "org-openroadm-interfaces:gcc",
+                "circuit-id": "__CIRCUITID",
+                "supporting-circuit-pack-name": "__SUPPORTINGCP",
+                "supporting-port": "__SUPPORTINGPORT",
+                "supporting-interface-list": [
+                    {
+                        "supporting-interface-list": "otu-__SUPPORTINGCP/__SUPPORTINGPORT"
+                    }
+                ],
+                "gcc": {
+                    "gcc-channel-type": "gcc0"
+                },
+                "ipv4": {
+                    "enabled": "true",
+                    "forwarding": "true",
+                    "dhcpc-enabled": "false",
+                    "address": [
+                        {
+                            "address-src": "loopback1"
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "eth-1/2/OAMP",
+                "type": "org-openroadm-interfaces:ethernetCsmacd",
+                "supporting-circuit-pack-name": "1/2",
+                "supporting-port": "OAMP",
+                "ipv4": {
+                    "proxy-arp": {
+                        "enabled": "true"
+                    }
+                }
+            }
+        ],
+        "routing": {
+            "routing-instance": [
+                {
+                    "name": "MCN",
+                    "type": "org-openroadm-routing:default-routing-instance",
+                    "enabled": "true",
+                    "routing-protocols": {
+                        "routing-protocol": [
+                            {
+                                "type": "org-openroadm-routing:static",
+                                "name": "STATIC",
+                                "static-routes": {
+                                    "ipv4": {
+                                        "route": [
+                                            {
+                                                "destination-prefix": "__REMOTEIPADDR/32",
+                                                "next-hop": {
+                                                    "outgoing-interface": "gcc0-__SUPPORTINGCP/__SUPPORTINGPORT"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+}

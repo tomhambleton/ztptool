@@ -1,0 +1,18 @@
+{
+    "org-openroadm-device": {
+        "circuit-packs": [
+            {
+                "circuit-pack-type": "20AX200",
+                "circuit-pack-product-code": "3TD00026AA",
+                "faceplate-label": "20AX200",
+                "model": "20AX200",
+                "circuit-pack-name": "__SHELF/__SLOT",
+                "vendor": "Nokia",
+                "shelf": "__SHELF",
+                "slot": "__SLOT",
+                "due-date": "__DUEDATE",
+                "is-physical": "true"
+            }
+        ]
+    }
+}

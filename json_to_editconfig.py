@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/home/openroadm/python/bin/python3
 """Convert an OpenROADM device JSON config (like input.json) into a sequence of
 NETCONF <edit-config> messages.
 

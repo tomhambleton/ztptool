@@ -1,0 +1,18 @@
+{
+    "org-openroadm-device": {
+        "circuit-packs": [
+            {
+                "circuit-pack-type": "20MX80",
+                "circuit-pack-product-code": "3TD00019AA",
+                "faceplate-label": "20MX80",
+                "model": "20MX80",
+                "circuit-pack-name": "__SHELF/__SLOT",
+                "vendor": "Nokia",
+                "shelf": "__SHELF",
+                "slot": "__SLOT",
+                "due-date": "__DUEDATE",
+                "is-physical": "true"
+            }
+        ]
+    }
+}

@@ -1,0 +1,32 @@
+{
+    "org-openroadm-device": {
+        "interface": [
+            {
+                "name": "loopback1",
+                "type": "org-openroadm-interfaces:softwareLoopback",
+                "ipv6": {
+                    "enabled": "true",
+                    "forwarding": "true",
+                    "dhcpc-enabled": "false",
+                    "address": [
+                        {
+                            "ip": "__IPADDRESS",
+                            "prefix-length": "__PREFIXLENGTH"
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "eth-1/2/OAMP",
+                "type": "org-openroadm-interfaces:ethernetCsmacd",
+                "supporting-circuit-pack-name": "1/2",
+                "supporting-port": "OAMP",
+                "ipv6": {
+                    "proxy-ndp": {
+                        "enabled": "true"
+                    }
+                }
+            }
+        ]
+    }
+}
