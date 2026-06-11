@@ -1,11 +1,11 @@
-#!/home/openroadm/python/bin/python3
+#!/usr/bin/env python3
 """Convert an OpenROADM device JSON config (like input.json) into a sequence of
 NETCONF <edit-config> messages.
 
 By default the messages are printed to stdout. Given ``--host IP`` (with
 ``--username``), they are instead sent to that NETCONF server with ncclient,
-one <edit-config> per message; on the first server or transport error the run
-stops and exits non-zero. When the candidate datastore is targeted (the
+one <edit-config> per message, printing each request sent and reply received;
+on the first server or transport error the run stops and exits non-zero. When the candidate datastore is targeted (the
 default) a commit is issued after all messages succeed (disable with
 ``--no-commit``).
 
@@ -448,9 +448,26 @@ def make_message(groups, msg_id, target, default_op, resolver=None):
     return rpc
 
 
+def _pretty_xml(xml_text):
+    """Pretty-print an XML string for display; return it unchanged if unparsable."""
+    try:
+        return etree.tostring(etree.fromstring(xml_text.encode()),
+                              pretty_print=True, encoding="unicode")
+    except Exception:  # noqa: BLE001 - show raw on any parse issue
+        return xml_text if xml_text.endswith("\n") else xml_text + "\n"
+
+
+def _show(banner, xml_text):
+    """Print a NETCONF message to stdout under a banner."""
+    sys.stdout.write("===== %s =====\n" % banner)
+    sys.stdout.write(_pretty_xml(xml_text))
+    sys.stdout.flush()
+
+
 def send_messages(groups_list, args, resolver):
-    """Send each group as a NETCONF <edit-config> via ncclient, stopping on the
-    first error. Commits afterwards when targeting the candidate datastore."""
+    """Send each group as a NETCONF <edit-config> via ncclient, printing each
+    request sent and reply received, stopping on the first error. Commits
+    afterwards when targeting the candidate datastore."""
     try:
         from ncclient import manager
         from ncclient.operations import RPCError
@@ -471,6 +488,7 @@ def send_messages(groups_list, args, resolver):
     except Exception as exc:  # noqa: BLE001 - connection/auth failure
         sys.exit("error: cannot connect to %s:%d: %s" % (args.host, args.port, exc))
 
+    total = len(groups_list)
     sent = 0
     try:
         for index, groups in enumerate(groups_list, start=1):
@@ -478,33 +496,36 @@ def send_messages(groups_list, args, resolver):
                 time.sleep(args.delay)
             config = build_config(groups, resolver)
             payload = etree.tostring(config, encoding="unicode")
+            request = make_message(groups, index, args.target, args.default_operation, resolver)
+            _show("SENT edit-config %d/%d" % (index, total),
+                  etree.tostring(request, encoding="unicode"))
             try:
-                session.edit_config(target=args.target, config=payload,
-                                    default_operation=args.default_operation)
+                reply = session.edit_config(target=args.target, config=payload,
+                                            default_operation=args.default_operation)
             except RPCError as exc:
-                sys.stderr.write("error: edit-config %d/%d rejected by server: %s\n"
-                                 % (index, len(groups_list), exc))
+                _show("RECEIVED edit-config %d/%d (rpc-error)" % (index, total),
+                      getattr(exc, "xml", None) or str(exc))
                 sys.exit(1)
             except Exception as exc:  # noqa: BLE001 - transport/other failure
-                sys.stderr.write("error: edit-config %d/%d failed: %s\n"
-                                 % (index, len(groups_list), exc))
+                sys.stderr.write("error: edit-config %d/%d failed: %s\n" % (index, total, exc))
                 sys.exit(1)
+            _show("RECEIVED edit-config %d/%d" % (index, total), reply.xml)
             sent += 1
-            sys.stderr.write("ok: edit-config %d/%d applied to %s\n"
-                             % (index, len(groups_list), args.target))
 
         if args.target == "candidate" and not args.no_commit:
+            _show("SENT commit", "<commit/>")
             try:
-                session.commit()
-                sys.stderr.write("ok: committed candidate datastore\n")
+                reply = session.commit()
             except Exception as exc:  # noqa: BLE001 - commit failure
-                sys.exit("error: commit failed: %s" % exc)
+                _show("RECEIVED commit (error)", getattr(exc, "xml", None) or str(exc))
+                sys.exit(1)
+            _show("RECEIVED commit", reply.xml)
     finally:
         try:
             session.close_session()
         except Exception:  # noqa: BLE001 - best-effort cleanup
             pass
-    sys.stderr.write("done: %d edit-config message(s) applied\n" % sent)
+    sys.stderr.write("done: %d edit-config message(s) applied to %s\n" % (sent, args.target))
 
 
 def message_groups(device, single):
