@@ -1,1 +1,2 @@
-/home/openroadm/tools/ztptool/json_to_editconfig.py --host 2001:ed8:77b5::15a --port 830 --values values/base.json --username openroadm --password openroadm templates/NOKIA-PSS8XO-SMALL-XPDR-BASE.json
+#/home/openroadm/tools/ztptool/json_to_editconfig.py --host 2001:ed8:77b5::15a --port 830 --values values/base.json --username openroadm --password openroadm --config-only templates/NOKIA-PSS8XO-SMALL-XPDR-BASE.json
+/home/openroadm/tools/ztptool/json_to_editconfig.py --default-operation merge --host 2001:ed8:77b5::15a --port 830 --values values/base.json --username openroadm --password openroadm --config-only templates/NOKIA-PSS8XO-SMALL-XPDR-BASE-IPV6-DR.json

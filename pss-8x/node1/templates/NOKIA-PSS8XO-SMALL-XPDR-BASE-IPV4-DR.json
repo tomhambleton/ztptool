@@ -9,11 +9,11 @@
                 "ethernet": {
                     "speed": "1000",
                     "duplex": "full",
-                    "auto-negotiation": "false"
+                    "auto-negotiation": "disabled"
                 },
                 "ipv4": {
-                    "enabled": "false",
-                    "forwarding": "false",
+                    "enabled": "true",
+                    "forwarding": "true",
                     "dhcpc-enabled": "false",
                     "address": [
                         {
